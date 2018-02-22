@@ -89,8 +89,8 @@ pi_test1(:, 1) = UP_RIGHT; % When on the leftmost column, go up right.
 pi_test1(:, 5) = UP_LEFT ; % When on the rightmost column, go up left.
 pi_test1(:, 3) = UP_LEFT ; % When on the center column, go up left.
 
-pi_test1_stateNumbers = zeros(1,125);
-pi_test1_stateNumbers(:) = pi_test1';
+pi_test1_stateAction = zeros(1,125);
+pi_test1_stateAction(:) = pi_test1';
 
 %%
 currentTimeStep = 0 ;
@@ -105,78 +105,139 @@ agentMovementHistory = zeros(episodeLength+1, 2) ;
 agentMovementHistory(currentTimeStep + 1, :) = agentLocation ;
 
 
-%% PRINT MAP:
-% You can update viewableGridMap in a similar way as below, in order to
-% keep track of the current visible area for your car (don't use this with
-% road bases since the whole map should be visible at any time in that case
-% ): 
-viewableGridMap = ...
-    setCurrentViewableGridMap( MDP_1, agentLocation, blockSize ) ;
-% When printing $viewableGridMap.Grid$ notice that the row numbers no
-% longer correspond to the original test map rows. Use $agentLocation(1)$  
-% to keep track of your current row in the complete test map.
-
-refreshScreen % See $refreshScreen$ function for details.
 
 
-%% TEST ACTION TAKING, MOVING WINDOW AND TRAJECTORY PRINTING:
-% Simulating agent behaviour when following the policy defined by 
-% $pi_test1$.
-%
-% Commented lines also have examples of use for $GridMap$'s $getReward$ and
-% $getTransitions$ functions, which act as our reward and transition
-% functions respectively.
+% %% PRINT MAP:
+% % You can update viewableGridMap in a similar way as below, in order to
+% % keep track of the current visible area for your car (don't use this with
+% % road bases since the whole map should be visible at any time in that case
+% % ): 
+% viewableGridMap = ...
+%     setCurrentViewableGridMap( MDP_1, agentLocation, blockSize ) ;
+% % When printing $viewableGridMap.Grid$ notice that the row numbers no
+% % longer correspond to the original test map rows. Use $agentLocation(1)$  
+% % to keep track of your current row in the complete test map.
 
-realAgentLocation = agentLocation ; % The location on the full test map.
-Return = 0;
+% refreshScreen % See $refreshScreen$ function for details.
 
-for i = 1:episodeLength
-    
-    actionTaken = pi_test1( realAgentLocation(1), realAgentLocation(2) );
-    
-    % The $GridMap$ functions $getTransitions$ and $getReward$ act as the 
-    % problems transition and reward function respectively.
-    %
-    % $actionMoveAgent$ can be used to simulate agent (the car) behaviour.
-    
-%     [ possibleTransitions, probabilityForEachTransition ] = ...
-%         MDP_1.getTransitions( realAgentLocation, actionTaken );
-%     [ numberOfPossibleNextStates, ~ ] = size(possibleTransitions);
-%     previousAgentLocation = realAgentLocation;
-    
-    [ agentRewardSignal, realAgentLocation, currentTimeStep, ...
-        agentMovementHistory ] = ...
-        actionMoveAgent( actionTaken, realAgentLocation, MDP_1, ...
-        currentTimeStep, agentMovementHistory, ...
-        probabilityOfUniformlyRandomDirectionTaken ) ;
 
-%     MDP_1.getReward( ...
-%             previousAgentLocation, realAgentLocation, actionTaken )
+% %% TEST ACTION TAKING, MOVING WINDOW AND TRAJECTORY PRINTING:
+% % Simulating agent behaviour when following the policy defined by 
+% % $pi_test1$.
+% %
+% % Commented lines also have examples of use for $GridMap$'s $getReward$ and
+% % $getTransitions$ functions, which act as our reward and transition
+% % functions respectively.
+
+% realAgentLocation = agentLocation ; % The location on the full test map.
+% Return = 0;
+
+% for i = 1:episodeLength
     
-    Return = Return + agentRewardSignal;
+%     actionTaken = pi_test1( realAgentLocation(1), realAgentLocation(2) );
     
-    % If you want to view the agents behaviour sequentially, and with a 
-    % moving view window, try using $pause(n)$ to pause the screen for $n$
-    % seconds between each draw:
+%     [ agentRewardSignal, realAgent  Location, currentTimeStep, ...
+%         agentMovementHistory ] = ...
+%         actionMoveAgent( actionTaken, realAgentLocation, MDP_1, ...
+%         currentTimeStep, agentMovementHistory, ...
+%         probabilityOfUniformlyRandomDirectionTaken ) ;
+
+    
+%     Return = Return + agentRewardSignal;
+    
+%     % If you want to view the agents behaviour sequentially, and with a 
+%     % moving view window, try using $pause(n)$ to pause the screen for $n$
+%     % seconds between each draw:
        
-    [ viewableGridMap, agentLocation ] = setCurrentViewableGridMap( ...
-        MDP_1, realAgentLocation, blockSize );
-    % $agentLocation$ is the location on the viewable grid map for the 
-    % simulation. It is used by $refreshScreen$.
+%     [ viewableGridMap, agentLocation ] = setCurrentViewableGridMap( ...
+%         MDP_1, realAgentLocation, blockSize );
+%     % $agentLocation$ is the location on the viewable grid map for the 
+%     % simulation. It is used by $refreshScreen$.
     
-    currentMap = viewableGridMap ; %#ok<NASGU>
-    % $currentMap$ is keeping track of which part of the full test map
-    % should be printed by $refreshScreen$ or $printAgentTrajectory$.
+%     currentMap = viewableGridMap ; %#ok<NASGU>
+%     % $currentMap$ is keeping track of which part of the full test map
+%     % should be printed by $refreshScreen$ or $printAgentTrajectory$.
     
-    refreshScreen
+%     refreshScreen
     
-    pause(0.15)
+%     pause(0.15)
     
+% end
+
+% currentMap = MDP_1 ;
+% agentLocation = realAgentLocation;
+
+% Return
+
+% printAgentTrajectory
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Exercise 1
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+%% POLICY EVALUATION
+%% Initialization
+
+% Number of times to run the evaluation algorithm
+num_iterations = 100;
+
+% Number of states in the MDP
+num_states = length(pi_test1_stateAction);
+
+%
+% Initialize three vectors of length num_states to
+% represent flattened version of the 25x5 [row, column] GridMap
+%
+
+% Initialize to 0 the values of all states. Later, we will iteratively 
+% update the vector with the state values under the chosen policy
+stateValues = zeros(1, num_states);
+% Corresponding row indices in GridMap
+row = ceil(linspace(1, num_states, num_states)./5);
+% Corresponding column indices in GridMap
+col = repmat(linspace(1, blockSize, blockSize), 1, episodeLength + 1);
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+%% POLICY EVALUATION
+%% Iterative value update
+
+for i=1:num_iterations
+
+  % Temporary store for values of current iteration
+  stateValues_temp = zeros(1, num_states);
+
+  for j=1:num_states
+    % Coordinates of the current state
+    currState = [row(j) col(j)];
+    actionTaken = pi_test1_stateAction(j);
+
+    % Get possible transitions from currState
+    [ possibleTransitions, probabilityForEachTransition ] = ...
+      MDP_1.getTransitions(currState, actionTaken);
+
+    % Iterate over possibleTransitions
+    for k=1:size(possibleTransitions,1)
+      nextState = possibleTransitions(k,:);
+      probForTransition = probabilityForEachTransition(k);
+
+      immediateReward = MDP_1.getReward(currState, nextState, actionTaken);
+      flatNextStateIndex = (nextState(1)-1)*blockSize + nextState(2);
+      valueOfNextState = stateValues(flatNextStateIndex);
+      
+
+      % Increment the value of the current state
+      stateValues_temp(j) = stateValues_temp(j) + ...
+        probForTransition * (immediateReward + valueOfNextState);
+    end
+  end
+  stateValues = stateValues_temp;
 end
 
-currentMap = MDP_1 ;
-agentLocation = realAgentLocation ;
-
-Return
-
-printAgentTrajectory
+stateValuesMatrix = reshape(stateValues, [num_states/blockSize, blockSize])
