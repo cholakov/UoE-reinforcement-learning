@@ -1,0 +1,42 @@
+
+############################################################
+############################################################
+
+Reinforcement Learning
+
+Coursework 1
+
+Student: Vesko Cholakov, s1753272
+
+March 2018
+
+############################################################
+############################################################
+
+
+
+############################################################
+########## Exercise 1:
+
+Implement policy evaluation
+Assume undiscounted MDP, gamma = 1
+
+plug in 0 everywhere
+
+reward + value according to old estimate
+
+sum(0.05*rewards)
+
+############################################################
+########## Exercise 2:
+
+
+Explain how to produce a better policy
+
+
+############################################################
+########## Exercise 3:
+
+Implement the policy iteration algorithm
+
+
