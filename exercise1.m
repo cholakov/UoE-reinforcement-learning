@@ -89,8 +89,8 @@ pi_test1(:, 1) = UP_RIGHT; % When on the leftmost column, go up right.
 pi_test1(:, 5) = UP_LEFT ; % When on the rightmost column, go up left.
 pi_test1(:, 3) = UP_LEFT ; % When on the center column, go up left.
 
-pi_test1_stateAction = zeros(1,125);
-pi_test1_stateAction(:) = pi_test1';
+pi_test1_policy = zeros(1,125);
+pi_test1_policy(:) = pi_test1';
 
 %%
 currentTimeStep = 0 ;
@@ -174,70 +174,106 @@ agentMovementHistory(currentTimeStep + 1, :) = agentLocation ;
 
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Exercise 1
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%
-%% POLICY EVALUATION
-%% Initialization
 
 % Number of times to run the evaluation algorithm
-num_iterations = 100;
+num_value_iterations = 100;
 
-% Number of states in the MDP
-num_states = length(pi_test1_stateAction);
+stateValues = policyEvaluation(blockSize, episodeLength, MDP_1, ...
+  num_value_iterations, pi_test1_policy)
 
-%
-% Initialize three vectors of length num_states to
-% represent flattened version of the 25x5 [row, column] GridMap
-%
 
-% Initialize to 0 the values of all states. Later, we will iteratively 
-% update the vector with the state values under the chosen policy
-stateValues = zeros(1, num_states);
-% Corresponding row indices in GridMap
-row = ceil(linspace(1, num_states, num_states)./5);
-% Corresponding column indices in GridMap
-col = repmat(linspace(1, blockSize, blockSize), 1, episodeLength + 1);
+stateValuesMatrix = reshape(stateValues, [blockSize, num_states/blockSize])'
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Exercise 3
+%%%%%%%%%%%%%
+
+% num_value_iterations = 5;
+
+% betterPolicy = policyIteration(blockSize, episodeLength, MDP_1, ...
+%   num_value_iterations, pi_test1_policy)
+
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %% POLICY EVALUATION
-%% Iterative value update
+%% A function for iterative value update
 
-for i=1:num_iterations
+function stateValues = policyEvaluation( ...
+  blockSize, episodeLength, MDP, num_value_iterations, policy)
 
-  % Temporary store for values of current iteration
-  stateValues_temp = zeros(1, num_states);
+  % Initialize parameters %
 
-  for j=1:num_states
-    % Coordinates of the current state
-    currState = [row(j) col(j)];
-    actionTaken = pi_test1_stateAction(j);
+  % Number of states in the MDP
+  num_states = length(policy);
+  % Initialize to 0 the values of all states. Later, we will iteratively 
+  % update the vector with the state values under the chosen policy
+  stateValues = zeros(1, num_states);
 
-    % Get possible transitions from currState
-    [ possibleTransitions, probabilityForEachTransition ] = ...
-      MDP_1.getTransitions(currState, actionTaken);
+  % Run iterative updates %
+  for i=1:num_value_iterations
+    % Temporary store for values of current iteration
+    stateValues_temp = zeros(1, num_states);
+    for j=1:num_states
+      % Coordinates of the current state
+      currState = j;
+      actionTaken = policy(j);
+      % Get possible transitions from currState
+      [ possibleTransitions, probabilityForEachTransition ] = ...
+        MDP.getTransitions(currState, actionTaken);
+      % Iterate over possibleTransitions
+      for k=1:length(possibleTransitions)
+        nextState = possibleTransitions(k);
+        probForTransition = probabilityForEachTransition(k);
 
-    % Iterate over possibleTransitions
-    for k=1:size(possibleTransitions,1)
-      nextState = possibleTransitions(k,:);
-      probForTransition = probabilityForEachTransition(k);
+        immediateReward = MDP.getReward(currState, nextState, actionTaken);
+        valueOfNextState = stateValues(nextState);
+        
+        % Increment the value of the current state
+        stateValues_temp(j) = stateValues_temp(j) + ...
+          probForTransition * (immediateReward + valueOfNextState);
 
-      immediateReward = MDP_1.getReward(currState, nextState, actionTaken);
-      flatNextStateIndex = (nextState(1)-1)*blockSize + nextState(2);
-      valueOfNextState = stateValues(flatNextStateIndex);
-      
+      end % k=1:size(possibleTransitions,1)
+    end % j=1:num_states
+    stateValues = stateValues_temp;
+  end % i=1:num_value_iterations
+end % function stateValues
 
-      % Increment the value of the current state
-      stateValues_temp(j) = stateValues_temp(j) + ...
-        probForTransition * (immediateReward + valueOfNextState);
-    end
-  end
-  stateValues = stateValues_temp;
-end
 
-stateValuesMatrix = reshape(stateValues, [num_states/blockSize, blockSize])
+%%%%%%%%%%%%%%%%%%%%%%%%
+%% POLICY ITERATION
+%% A function which find an optimal policy
+
+function betterPolicy = policyIteration(blockSize, episodeLength, MDP_1, ...
+  num_value_iterations, initialPolicy)
+
+
+  stateValues = policyEvaluation(blockSize, episodeLength, MDP_1, ...
+    num_value_iterations, pi_test1_policy)
+
+  % Number of times to run policy improvement
+  for i=1:5
+    % Number of states
+    for j=1:num_states
+
+
+      % [ possibleTransitions, probabilityForEachTransition ] = ...
+      %   MDP.getTransitions(currState, actionTaken);
+
+
+    end % i=1:5
+  end % j=1:num_states
+
+end % function betterPolicy
+
+

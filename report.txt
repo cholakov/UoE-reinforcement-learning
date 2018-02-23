@@ -1,3 +1,4 @@
+https://stackoverflow.com/questions/18200248/cloning-a-repo-from-someone-elses-github-and-pushing-it-to-a-repo-on-my-github
 
 ############################################################
 ############################################################
@@ -30,8 +31,22 @@ sum(0.05*rewards)
 ############################################################
 ########## Exercise 2:
 
+Part 1:
 
-Explain how to produce a better policy
+First evaluate policy. Build value function which informs us how to improve our policy. We can greedly with respect to that value function picking in each state the action which looks best (one-step lookahead). 
+
+
+
+Stochastic: if we have some sort of symmetry where it doesn't matter which way we take. OR ... ? 
+
+After one step of acting greedly we're stuck with a deterministic policy (David Silver.)
+
+
+
+Part 2:
+
+Yes, the policy iteration procedure will converge to an optimal
+policy, even if we change the reward function during the iterative procedure, assuming we continue to run it long enough. This is because we can initialize the value function arbitrarily and we are guaranteed convergence; in this case, we can see the previous calculations as just some random starting state.
 
 
 ############################################################
