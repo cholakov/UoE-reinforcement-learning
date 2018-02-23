@@ -100,8 +100,8 @@ pi_test1_policy(:) = pi_test1';
 %% Exercise 3 %%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 
-num_value_iterations = 5;
-num_policy_iterations = 5;
+num_value_iterations = 15;
+num_policy_iterations = 30;
 
 [stateValues, betterPolicy] = policyIteration(blockSize, episodeLength, MDP_1, ...
   pi_test1_policy, num_value_iterations, num_policy_iterations);
