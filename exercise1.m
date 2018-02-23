@@ -173,52 +173,55 @@ agentMovementHistory(currentTimeStep + 1, :) = agentLocation ;
 
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% STUDENT SOLUTION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Exercise 1
-%%%%%%%%%%%%%
+%% Exercise 1 %%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% num_value_iterations = 100;
+
+% stateValues = policyEvaluation(blockSize, episodeLength, MDP_1, ...
+%   pi_test1_policy, num_value_iterations);
+
+% stateValuesMatrix = reshape(stateValues, [blockSize, num_states/blockSize])'
 
 
-% Number of times to run the evaluation algorithm
-num_value_iterations = 100;
 
-stateValues = policyEvaluation(blockSize, episodeLength, MDP_1, ...
-  num_value_iterations, pi_test1_policy)
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Exercise 3 %%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+num_value_iterations = 5;
+num_policy_iterations = 5;
+
+[stateValues, betterPolicy] = policyIteration(blockSize, episodeLength, MDP_1, ...
+  pi_test1_policy, num_value_iterations, num_policy_iterations);
 
 
 stateValuesMatrix = reshape(stateValues, [blockSize, num_states/blockSize])'
+betterPolicyMatrix = reshape(betterPolicy, [blockSize, num_states/blockSize])'
 
 
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Exercise 3
-%%%%%%%%%%%%%
-
-% num_value_iterations = 5;
-
-% betterPolicy = policyIteration(blockSize, episodeLength, MDP_1, ...
-%   num_value_iterations, pi_test1_policy)
-
-
-
-
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% SUPPORT FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %% POLICY EVALUATION
 %% A function for iterative value update
 
 function stateValues = policyEvaluation( ...
-  blockSize, episodeLength, MDP, num_value_iterations, policy)
+  blockSize, episodeLength, MDP, policy, num_value_iterations)
 
   % Initialize parameters %
-
-  % Number of states in the MDP
-  num_states = length(policy);
-  % Initialize to 0 the values of all states. Later, we will iteratively 
-  % update the vector with the state values under the chosen policy
-  stateValues = zeros(1, num_states);
+  num_states = length(policy); % Number of states in the MDP
+  stateValues = zeros(1, num_states); % Initialize to 0 the values of all 
+  % states. We will iteratively converge onto the true values under the policy
 
   % Run iterative updates %
   for i=1:num_value_iterations
@@ -254,26 +257,54 @@ end % function stateValues
 %% POLICY ITERATION
 %% A function which find an optimal policy
 
-function betterPolicy = policyIteration(blockSize, episodeLength, MDP_1, ...
-  num_value_iterations, initialPolicy)
+function [stateValues, betterPolicy] = policyIteration( ...
+  blockSize, episodeLength, MDP, policy, num_value_iterations, num_policy_iterations)
 
+  % Initialize parameters %
+  num_states = length(policy); % Number of states in the MDP
+  betterPolicy = policy;
 
-  stateValues = policyEvaluation(blockSize, episodeLength, MDP_1, ...
-    num_value_iterations, pi_test1_policy)
+  % Number of times to run policy iteration
+  for i=1:num_policy_iterations
 
-  % Number of times to run policy improvement
-  for i=1:5
+    % Evaluate the current policy
+    stateValues = policyEvaluation(blockSize, episodeLength, MDP, ...
+      betterPolicy, num_value_iterations);
+
     % Number of states
     for j=1:num_states
+      currState = j;
+      bestNextState = -Inf;
+      bestNextStateValue = -Inf;
+      bestAction = -Inf;
 
+      % Get possible transitions from currState
+      [ possibleTransitions, probabilityForEachTransition ] = ...
+        MDP.getTransitions(currState, 0);
 
-      % [ possibleTransitions, probabilityForEachTransition ] = ...
-      %   MDP.getTransitions(currState, actionTaken);
+      % Iterate over possibleTransitions
+      for k=1:length(possibleTransitions)
+        % Greedy policy to best next state
+        if bestNextStateValue < stateValues(k)
+          bestNextState = possibleTransitions(k);
+          bestNextStateValue = stateValues(k);
+        end
+      end
 
+      % Now we know the best next state
+      % Determine what action (UP, UP_LEFT or UP_RIGHT) gets us there
+      if currState - bestNextState == blockSize + 1
+        bestAction = 1; % UP_LEFT
+      elseif currState - bestNextState == blockSize - 1
+        bestAction = 3; % UP_RIGHT
+      else
+        bestAction = 2; % UP
+        % This captures when currState - bestNextState == blockSize,
+        % as well as the last absorbing state
+      end
+
+      betterPolicy(j) = bestAction;
 
     end % i=1:5
   end % j=1:num_states
-
 end % function betterPolicy
-
-
