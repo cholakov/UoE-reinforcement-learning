@@ -1,0 +1,41 @@
+
+Reinforcement Learning
+Coursework 1
+
+Student: Vesko Cholakov, s1753272
+
+March 2018
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% EXERCISE 2 %%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Part 1: %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+To produce a better policy, we can run either Policy Iteration or Value Iteration.
+
+POLICY ITERATION
+1. Run the Policy Evaluation algorithm from Exercise 1, given some policy pi, which can be initialized randomly. 
+2. Implement the Policy Improvement algorithm: 
+	Iterate over all possible states. In each state, iterate over all possible actions. Record as optimal the action which yields the largest sum of immediate reward and state value of the respective subsequent state. Update the policy pi with the new action.
+3. Alternate steps 1. and 2. until the policy stabilizes. Policy Iteration is guaranteed to monotonically improve with each iteration until the optimal policy is reached.
+
+VALUE ITERATION
+Value Iteration is similar to Policy Iteration. Value Iteration can be thought as Policy Iteration where step 1. is repeated until the optimal value function is found. Then, step 2. is ran exactly once extracting the optimal policy.
+
+STOCHASTSIC POLICY
+We can extend our deterministic policy above and make it stochastic by specifying a probability to each state-action pair. A stochastic policy need not be always optimal, but it can be. For example, if in a given state we have two or more actions which are equally good, we can assign to each a portion of the total probability. The stochastic policy should be optimal as long as all suboptimal actions are assigned zero probability.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Part 2: %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Even if the reward function changes while running Policy Iteration, the procedure will converge, as long as we continue to run it long enough. It has been proven that in Policy Iteration, the policy and the value function converge to their optimal and expected values regardless of initialization. Thus, we can think of the change in reward function as marking the beginning of a new procedure with some random initializations.
