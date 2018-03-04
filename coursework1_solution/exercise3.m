@@ -28,7 +28,7 @@ rewards = [ 1, -1, -20 ] ; % the rewards are state-based. In order: paved
 % square as another car, and the collision does not end the instance, but
 % there is a significant reward penalty.
 
-probabilityOfUniformlyRandomDirectionTaken = 0.15 ; % Noisy driver actions.
+probabilityOfUniformlyRandomDirectionTaken = 0 ; % Noisy driver actions.
 % An action will not always have the desired effect. This is the
 % probability that the selected action is ignored and the car uniformly 
 % transitions into one of the above 3 states. If one of those states would 
@@ -93,15 +93,13 @@ pi_test1_policy = zeros(1,125);
 pi_test1_policy(:) = pi_test1';
 
 
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% STUDENT CODE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Exercise 3 %%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 
-num_value_iterations = 15;
-num_policy_iterations = 30;
+num_value_iterations = 25;
+num_policy_iterations = 5;
 
 [stateValues, betterPolicy] = policyIteration(blockSize, episodeLength, MDP_1, ...
   pi_test1_policy, num_value_iterations, num_policy_iterations);

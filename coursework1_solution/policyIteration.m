@@ -20,38 +20,41 @@ function [stateValues, betterPolicy] = policyIteration( ...
     % Evaluate the current policy
     stateValues = policyEvaluation(blockSize, episodeLength, MDP, ...
       betterPolicy, num_value_iterations);
+    stateValuesMatrix = reshape(stateValues, [blockSize, length(stateValues)/blockSize])'
 
     % Number of states
     for j=1:num_states
       currState = j;
-      bestNextState = -Inf;
       bestNextStateValue = -Inf;
       bestAction = -Inf;
 
       % Get possible transitions from currState
-      [ possibleTransitions, probabilityForEachTransition ] = ...
+      [ possibleTransitions, ~ ] = ...
         MDP.getTransitions(currState, 0);
 
       % Iterate over possibleTransitions
       for k=1:length(possibleTransitions)
         possibleNextState = possibleTransitions(k);
-        % Greedy policy to best next state
-        if bestNextStateValue < stateValues(possibleNextState)
-          bestNextState = possibleNextState;
-          bestNextStateValue = stateValues(possibleNextState);
+        
+        % Determine what action gets us to possibleNextState
+        if currState - possibleNextState == blockSize + 1
+          action = 1; % UP_LEFT
+        elseif currState - possibleNextState == blockSize - 1
+          action = 3; % UP_RIGHT
+        else
+          action = 2; % UP
+          % This captures when currState - bestNextState == blockSize,
+          % as well as the last absorbing state
         end
-      end
-
-      % Now we know the best next state
-      % Determine what action (UP, UP_LEFT or UP_RIGHT) gets us there
-      if currState - bestNextState == blockSize + 1
-        bestAction = 1; % UP_LEFT
-      elseif currState - bestNextState == blockSize - 1
-        bestAction = 3; % UP_RIGHT
-      else
-        bestAction = 2; % UP
-        % This captures when currState - bestNextState == blockSize,
-        % as well as the last absorbing state
+      
+        valueOfNextState = stateValues(possibleNextState);
+        immediateReward = MDP.getReward(currState, possibleNextState, action);
+      
+        % Greedy policy to best next state
+        if bestNextStateValue < valueOfNextState + immediateReward
+          bestNextStateValue = valueOfNextState + immediateReward;
+          bestAction = action;
+        end
       end
 
       betterPolicy(j) = bestAction;
