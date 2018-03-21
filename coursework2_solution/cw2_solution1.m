@@ -74,9 +74,14 @@ Q_test1(:,:,3) = 100; % obviously this is not a correctly computed Q-function;
 % functions respectively.
 
 
-EPS = 0.3
-num_episodes = 1
+
+num_episodes = 5
 total_returns = containers.Map;
+
+EPSILON = 0.3
+GAMMA = 0.8;
+ALPHA = 0.9;
+ANNEALING = 1.5; % decreasing factor for ALPHA
 
 
 for episode = 1:num_episodes
@@ -117,7 +122,7 @@ for episode = 1:num_episodes
 		set_a_max = find(action_values == max(action_values));  % indices of actions with max value
 		set_a_other = setdiff([1 2 3], set_a_max); % indices of all other actions
 
-		if rand > EPS/3+1-EPS | length(set_a_other) == 0 % epsilon: exploration or exploitation?
+		if rand > EPSILON/3+1-EPSILON | length(set_a_other) == 0 % epsilon: exploration or exploitation?
 			actionTaken = randsample(length(set_a_max), 1); % randomly pick one of the max actions 
 			% if more than one in set_a_max
 		else	
@@ -185,20 +190,10 @@ for episode = 1:num_episodes
 	end
 	%% Student code: END
 	
-	currentMap = MDP ;
-	agentLocation = realAgentLocation ;
+	currentMap = MDP;
+	agentLocation = realAgentLocation;
 	
-	Return
-	
-	printAgentTrajectory
+	Return;
+	printAgentTrajectory;
 	
 end % for each episode
-
-
-
-k = keys(total_returns);
-for j = 1:length(total_returns)
-	k{j}
-	total_returns(k{j})
-end	
-
