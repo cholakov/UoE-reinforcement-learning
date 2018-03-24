@@ -77,12 +77,9 @@ Q_test1(:,:,3) = 100; % obviously this is not a correctly computed Q-function;
 %% Student code: BEGIN
 num_episodes = 100;
 
-% EPSILON = 0.3;
-% GAMMA = 0.8;
-% ALPHA = 0.9;
-% ANNEALING = 1.5; % decreasing factor for ALPHA
-
-% total_returns = containers.Map;
+EPSILON = 0.3;
+ALPHA = 0.001;
+% ANNEALING = 0.9	; % decreasing factor for ALPHA
 
 theta = ones(20,3); % weight vector
 
@@ -90,17 +87,12 @@ episodeFeatures = zeros(24, 20);
 episodeRewards = zeros(24,1);
 episodeActions = zeros(24,1);
 
-phi = ones(20,3); % features vector, size: (num_features, num_actions)
+% phi = ones(20,3); % features vector, size: (num_features, num_actions)
 % episodeFeatures(i,:) * phi gives approximation of the expected reward
 
 %% Student code: END
 
 for episode = 1:num_episodes
-
-	% %% Student code: BEGIN
-	% visited_in_episode = containers.Map;
-	% first_action = -1;
-	% %% Student code: END
 
 	currentTimeStep = 0 ;
 	MDP = generateMap( roadBasisGridMaps, n_MiniMapBlocksPerMap, ...
@@ -141,42 +133,12 @@ for episode = 1:num_episodes
 			% if more than one in set_a_other
 		end
 		%% Student code: END
-
-		% %% Student code: BEGIN
-		% if i == 1
-		% 	first_action = actionTaken;
-		% end
-		% %% Student code: END
 			   		
 		[ agentRewardSignal, realAgentLocation, currentTimeStep, ...
 			agentMovementHistory ] = ...
 			actionMoveAgent( actionTaken, realAgentLocation, MDP, ...
 			currentTimeStep, agentMovementHistory, ...
 			probabilityOfUniformlyRandomDirectionTaken ) ;
-		
-
-		% %% Student code: BEGIN
-		% % Implements Every-Visit Monte Carlo
-		% % Increments visited_in_episode
-		% %
-		% %%
-
-		% stateFeatures_str = sprintf('%s', stateFeatures);
-		% % stateFeatures_str = sprintf('%s', i);
-		% % Increment all previously visited states with the reward from the
-		% % current state 
-		% k = keys(visited_in_episode);
-		% for j = 1:length(visited_in_episode)
-		% 	d = visited_in_episode(k{j});
-		% 	r = d(1) + agentRewardSignal;
-		% 	visited_in_episode(k{j}) = [r d(2)];
- 	% 	end
- 	% 	% If a state not visited in the current episode (determined by state's 
- 	% 	% representation), initialize entry
-		% if ~isKey(visited_in_episode, stateFeatures_str) 
-		% 	visited_in_episode(stateFeatures_str) = [0 actionTaken]; % [reward action]
-		% end		
-		% %% Student code: END
 
 		%% Student code: BEGIN
 		episodeFeatures(i,:) = stateFeatures(:);
@@ -188,71 +150,36 @@ for episode = 1:num_episodes
 	end % for state in episode
 
 	%% Student code: BEGIN
+	% Update Gradient
 	for i = 1:episodeLength
 		% theta (20,3)
 		% episodeFeatures (24, 20)
 		% episodeRewards (24,1)
 		% episodeActions (24,1)
 
-		phi = episodeFeatures(i,:);
 
 		a = episodeActions(i); % action taken
-		q = sum(episodeRewards(i:end)); % actual reward received
-		e = phi * theta(:, a); % estimated reward
+		v = sum(episodeRewards(i:end)); % target: actual reward received
+		q = episodeFeatures(i,:) * theta(:, a); % estimated reward
 
-		theta(:,a) = theta(:,a) - (q -  e) * phi';
+		theta(:,a) = theta(:,a) + (ALPHA * (v - q)) .* episodeFeatures(i,:)';
 	end
-	% Update Gradient
 
-	%% Student code: END
-
-	% %% Student code: BEGIN
-	% if first_action == 1
-	% 	Returns_1 = [Returns_1, Return];
-
-	% elseif first_action == 2
-	% 	Returns_2 = [Returns_2, Return];
-
-	% elseif first_action == 3
-	% 	Returns_3 = [Returns_3, Return];
-	% end
-	% %% Student code: END
-
-
-	%% Student code: BEGIN
-	% Increments total_returns
-	%
-	%%
-
-	% k = keys(visited_in_episode);
-	% for j = 1:length(visited_in_episode)
-	% 	s = k{j}; % state identified by its feature space
-	% 	last = visited_in_episode(s);
-	% 	r = last(1); % reward accumulated (in last episode)
-	% 	a = last(2); % action taken (in last episode)
-	% 	if ~isKey(total_returns, s) % initialize
-	% 		new = [0 0; 0 0; 0 0]; % 3 states, each characterized
-	% 		% by its total return and counter over many episodes
-	% 		total_returns(s) = new;
-	% 	end
-	% 	% increment
-	% 	incr = total_returns(s);
-	% 	incr(a, 1) = incr(a, 1) + r;
-	% 	incr(a, 2) = incr(a, 2) + 1;
-	% 	total_returns(s) = incr;
-	% end
+	ALPHA = (1/sqrt(num_episodes))*ALPHA;
 	%% Student code: END
 	
 	currentMap = MDP;
 	agentLocation = realAgentLocation;
 	
-	Return;
-	printAgentTrajectory;
+	% Return;
+	% printAgentTrajectory;
 	
 % mean(Returns_1)
 % mean(Returns_2)
 % mean(Returns_3)
 end % for each episode
+
+theta
 
 
 
