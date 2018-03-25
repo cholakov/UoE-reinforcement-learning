@@ -44,7 +44,7 @@ roadBasisGridMaps = generateMiniMaps ; % Generates the 8 road basis grid
 noCarOnRowProbability = 0.8 ; % the probability that there is no car 
 % spawned for each row
 
-seed = 1234;
+% seed = 1234;
 rng(seed); % setting the seed for the random nunber generator
 
 % Call this whenever starting a new episode:
@@ -77,7 +77,7 @@ Q_test1(:,:,3) = 100; % obviously this is not a correctly computed Q-function;
 %% Student code: BEGIN
 EPSILON 		= 1;
 ALPHA 			= 0.001;
-NUM_EPISODES 	= 500;
+NUM_EPISODES 	= 2600;
 theta 			= ones(20,3); % Weight vector, size: (num_features, num_actions)
 episodeFeatures = zeros(24, 20);
 episodeRewards 	= zeros(24,1);
@@ -152,7 +152,7 @@ for episode = 1:NUM_EPISODES
 	% episodeActions (24,1)
 
 	for i = 1:episodeLength - 1
-		a = episodeActions(i+1); 	% Action taken @i
+		a = episodeActions(i); 	% Action taken @i
 		phi = episodeFeatures(i,:); % Feature representation @i
 		Q = phi * theta(:, a); 		% Estimated Action-Value @i
 		if ALGORITHM == 0 % Monte Carlo
@@ -166,7 +166,7 @@ for episode = 1:NUM_EPISODES
 		theta(:,a) = theta(:,a) + grad;
 	end % episodeLength
 
-	ALPHA = (1/sqrt(episode)) * ALPHA; % decreasing alpha
+	ALPHA = 0.8 * ALPHA; % decreasing alpha
 
 	EPSILON = 1/episode;
 	%% Student code: END

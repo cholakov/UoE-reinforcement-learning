@@ -138,7 +138,7 @@ for episode = 1:NUM_EPISODES
 	% episodeActions (24,1)
 
 	for i = 1:episodeLength - 1
-		a = episodeActions(i+1); 	% Action taken @i
+		a = episodeActions(i); 	% Action taken @i
 		phi = episodeFeatures(i,:); % Feature representation @i
 		Q = phi * theta(:, a); 		% Estimated Action-Value @i
 		if ALGORITHM == 0 % Monte Carlo
