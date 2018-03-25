@@ -1,5 +1,4 @@
-
-ALGORITHM = 0; % 0 for Monte Carlo, 1 for TD-Learning
+ALGORITHM = 1; % 0 for Monte Carlo, 1 for TD-Learning
 
 %% ACTION CONSTANTS:
 UP_LEFT = 1 ;
@@ -75,24 +74,15 @@ Q_test1(:,:,3) = 100; % obviously this is not a correctly computed Q-function;
 
 
 %% Student code: BEGIN
-num_episodes = 100;
-
-EPSILON = 0.3;
-ALPHA = 0.001;
-% ANNEALING = 0.9	; % decreasing factor for ALPHA
-
-theta = ones(20,3); % weight vector
-
+ALPHA 			= 0.005;
+NUM_EPISODES 	= 500;
+theta 			= ones(20,3); % Weight vector, size: (num_features, num_actions)
 episodeFeatures = zeros(24, 20);
-episodeRewards = zeros(24,1);
-episodeActions = zeros(24,1);
-
-% phi = ones(20,3); % features vector, size: (num_features, num_actions)
-% episodeFeatures(i,:) * phi gives approximation of the expected reward
-
+episodeRewards 	= zeros(24,1);
+episodeActions 	= zeros(24,1);
 %% Student code: END
 
-for episode = 1:num_episodes
+for episode = 1:NUM_EPISODES
 
 	currentTimeStep = 0 ;
 	MDP = generateMap( roadBasisGridMaps, n_MiniMapBlocksPerMap, ...
@@ -113,25 +103,15 @@ for episode = 1:num_episodes
 		
 		% Use the $getStateFeatures$ function as below, in order to get the
 		% feature description of a state:
-		stateFeatures = MDP.getStateFeatures(realAgentLocation); % dimensions are 4 rows x 5 columns
+		stateFeatures = MDP.getStateFeatures(realAgentLocation); % Dimensions, 4 rows x 5 columns
 		
 		for action = 1:3
-			action_values(action) = ...
-				sum ( sum( Q_test1(:,:,action) .* stateFeatures ) );
+			action_values(action) = sum(sum(Q_test1(:,:,action) .* stateFeatures));
 		end % for each possible action
 
-		%% Student code: BEGIN
-		% Implement Epsilon-Greedy exploration on all actions
-		set_a_max = find(action_values == max(action_values));  % indices of actions with max value
-		set_a_other = setdiff([1 2 3], set_a_max); % indices of all other actions
-
-		if rand > EPSILON/3+1-EPSILON | length(set_a_other) == 0 % epsilon: exploration or exploitation?
-			actionTaken = randsample(length(set_a_max), 1); % randomly pick one of the max actions 
-			% if more than one in set_a_max
-		else	
-			actionTaken = randsample(length(set_a_other), 1); % randomly pick one of the max actions 
-			% if more than one in set_a_other
-		end
+		%% Student code: BEGIN | Break ties between optimal actions
+		set_a_max = find(action_values == max(action_values)); % Set of optimal actions, if more than one
+		actionTaken = randsample(length(set_a_max), 1); % Randomly pick one of the max actions
 		%% Student code: END
 			   		
 		[ agentRewardSignal, realAgentLocation, currentTimeStep, ...
@@ -140,32 +120,38 @@ for episode = 1:num_episodes
 			currentTimeStep, agentMovementHistory, ...
 			probabilityOfUniformlyRandomDirectionTaken ) ;
 
-		%% Student code: BEGIN
+		%% Student code: BEGIN | Record episode variables
 		episodeFeatures(i,:) = stateFeatures(:);
 		episodeRewards(i) = agentRewardSignal;
 		episodeActions(i) = actionTaken;
 		Return = Return + agentRewardSignal;
 		%% Student code: END
 		
-	end % for state in episode
+	end % episodeLength
 
-	%% Student code: BEGIN
-	% Update Gradient
-	for i = 1:episodeLength
-		% theta (20,3)
-		% episodeFeatures (24, 20)
-		% episodeRewards (24,1)
-		% episodeActions (24,1)
+	%% Student code: BEGIN | Update Gradient
 
+	% theta (20,3)
+	% episodeFeatures (24, 20)
+	% episodeRewards (24,1)
+	% episodeActions (24,1)
 
-		a = episodeActions(i); % action taken
-		v = sum(episodeRewards(i:end)); % target: actual reward received
-		q = episodeFeatures(i,:) * theta(:, a); % estimated reward
+	for i = 1:episodeLength - 1
+		a = episodeActions(i+1); 	% Action taken @i
+		phi = episodeFeatures(i,:); % Feature representation @i
+		Q = phi * theta(:, a); 		% Estimated Action-Value @i
+		if ALGORITHM == 0 % Monte Carlo
+			G = sum(episodeRewards(i:end)); 	% Actual reward accumulated till end of episode
+			grad = (ALPHA * (G - Q)) .* phi'; 	% Gradient
+		elseif ALGORITHM == 1 % TD(0)-Learning
+			R_next = episodeRewards(i + 1); 	% Actual reward @i+1
+			Q_next = episodeFeatures(i + 1,:) * theta(:, episodeActions(i + 1)); % Estimated Q @i+1
+			grad = ALPHA * (R_next + Q_next - Q) .* phi'; % Gradient
+		end % if
+		theta(:,a) = theta(:,a) + grad;
+	end % episodeLength
 
-		theta(:,a) = theta(:,a) + (ALPHA * (v - q)) .* episodeFeatures(i,:)';
-	end
-
-	ALPHA = (1/sqrt(num_episodes))*ALPHA;
+	ALPHA = (1/sqrt(NUM_EPISODES)) * ALPHA; % decreasing alpha
 	%% Student code: END
 	
 	currentMap = MDP;
@@ -173,13 +159,6 @@ for episode = 1:num_episodes
 	
 	% Return;
 	% printAgentTrajectory;
-	
-% mean(Returns_1)
-% mean(Returns_2)
-% mean(Returns_3)
-end % for each episode
+end % NUM_EPISODES
 
 theta
-
-
-
