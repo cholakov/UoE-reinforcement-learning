@@ -1,5 +1,5 @@
 FEATURES = 0; % 0 for Original, 1 for Custom
-ALGORITHM = 1; % 0 for Monte Carlo, 1 for TD-Learning
+ALGORITHM = 0; % 0 for Monte Carlo, 1 for TD-Learning
 
 %% ACTION CONSTANTS:
 UP_LEFT = 1 ;
@@ -31,7 +31,7 @@ rewards = [ 1, -1, -20 ] ; % the rewards are state-based. In order: paved
 % square as another car, and the collision does not end the instance, but
 % there is a significant reward penalty.
 
-probabilityOfUniformlyRandomDirectionTaken = 0.15 ; % Noisy driver actions.
+probabilityOfUniformlyRandomDirectionTaken = 0.0 ; % Noisy driver actions.
 % An action will not always have the desired effect. This is the
 % probability that the selected action is ignored and the car uniformly 
 % transitions into one of the above 3 states. If one of those states would 
@@ -58,11 +58,11 @@ MDP = generateMap(roadBasisGridMaps, n_MiniMapBlocksPerMap, blockSize, ...
 stateFeatures = ones(4, 5);
 action_values = zeros(1, 3);
 
-% Q_test1 = ones(4, 5, 3);
-% Q_test1(:,:,1) = 100;
-% Q_test1(:,:,3) = 100; % obviously this is not a correctly computed Q-function; 
-% % it does imply a policy however: Always go Up! (though on a clear road it will 
-% % default to the first indexed action: go left)
+Q_test1 = ones(4, 5, 3);
+Q_test1(:,:,1) = 100;
+Q_test1(:,:,3) = 100; % obviously this is not a correctly computed Q-function; 
+% it does imply a policy however: Always go Up! (though on a clear road it will 
+% default to the first indexed action: go left)
 
 
 %% TEST ACTION TAKING, MOVING WINDOW AND TRAJECTORY PRINTING:
@@ -76,7 +76,7 @@ action_values = zeros(1, 3);
 
 %% Student code: BEGIN
 EPSILON 		= 1;
-ALPHA 			= 0.005;
+ALPHA 			= 0.001;
 NUM_EPISODES 	= 500;
 theta 			= ones(20,3); % Weight vector, size: (num_features, num_actions)
 episodeFeatures = zeros(24, 20);
@@ -115,12 +115,19 @@ for episode = 1:NUM_EPISODES
 		set_a_max = find(action_values == max(action_values)); % Set of optimal actions, if more than one
 		set_a_other = setdiff([1 2 3], set_a_max); % Set of all other actions
 
-		if rand > EPSILON / 3 + 1 - EPSILON | length(set_a_other) == 0 % Exploration or exploitation?
-			actionTaken = randsample(length(set_a_max), 1); % Randomly pick one of the max actions 
+		if rand < EPSILON / 3 + 1 - EPSILON | length(set_a_other) == 0 % Exploration or exploitation?
+			idx = randsample(length(set_a_max), 1); % Randomly pick one of the max actions 
+			actionTaken = set_a_max(idx);
 		else	
 			actionTaken = randsample(length(set_a_other), 1); % Randomly pick one of the other actions 
+			actionTaken = set_a_other(idx);
 		end
 		%% Student code: END
+
+		% for action = 1:3
+		% 	action_values(action) = sum(sum(Q_test1(:,:,action) .* stateFeatures));
+		% end % for each possible action
+		% [~, actionTaken] = max(action_values);
 			   		
 		[ agentRewardSignal, realAgentLocation, currentTimeStep, ...
 			agentMovementHistory ] = ...
@@ -159,14 +166,20 @@ for episode = 1:NUM_EPISODES
 		theta(:,a) = theta(:,a) + grad;
 	end % episodeLength
 
-	ALPHA = (1/sqrt(NUM_EPISODES)) * ALPHA; % decreasing alpha
+	ALPHA = (1/sqrt(episode)) * ALPHA; % decreasing alpha
+
+	EPSILON = 1/episode;
 	%% Student code: END
 	
 	currentMap = MDP;
 	agentLocation = realAgentLocation;
 	
-	% Return;
-	% printAgentTrajectory;
+	
 end % NUM_EPISODES
 
+printAgentTrajectory;
+
+Return
 theta
+
+

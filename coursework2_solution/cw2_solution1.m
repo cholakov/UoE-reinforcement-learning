@@ -75,7 +75,7 @@ Q_test1(:,:,3) = 100; % obviously this is not a correctly computed Q-function;
 
 %% Student code: BEGIN
 ALPHA 			= 0.005;
-NUM_EPISODES 	= 500;
+NUM_EPISODES 	= 1000;
 theta 			= ones(20,3); % Weight vector, size: (num_features, num_actions)
 episodeFeatures = zeros(24, 20);
 episodeRewards 	= zeros(24,1);
@@ -111,7 +111,8 @@ for episode = 1:NUM_EPISODES
 
 		%% Student code: BEGIN | Break ties between optimal actions
 		set_a_max = find(action_values == max(action_values)); % Set of optimal actions, if more than one
-		actionTaken = randsample(length(set_a_max), 1); % Randomly pick one of the max actions
+		idx = randsample(length(set_a_max), 1); % Randomly pick one of the max actions
+		actionTaken = set_a_max(idx);
 		%% Student code: END
 			   		
 		[ agentRewardSignal, realAgentLocation, currentTimeStep, ...
@@ -151,7 +152,7 @@ for episode = 1:NUM_EPISODES
 		theta(:,a) = theta(:,a) + grad;
 	end % episodeLength
 
-	ALPHA = (1/sqrt(NUM_EPISODES)) * ALPHA; % decreasing alpha
+	ALPHA = (1/sqrt(episode)) * ALPHA; % decreasing alpha
 	%% Student code: END
 	
 	currentMap = MDP;
