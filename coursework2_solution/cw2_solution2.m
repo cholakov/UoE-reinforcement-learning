@@ -1,5 +1,17 @@
-FEATURES = 0; % 0 for Original, 1 for Custom
-ALGORITHM = 0; % 0 for Monte Carlo, 1 for TD-Learning
+%% Student code: BEGIN | Settings
+%
+FEATURES 		= 0; % 0 for Original, 	  1 for Custom
+ALGORITHM 		= 0; % 0 for Monte Carlo, 1 for TD-Learning
+
+NUM_EPISODES 	= 3000;
+EVAL 			= false; % Activate Evaluation mode. Make sure
+% to run program at least once with 'false' to learn the weights
+EVAL_MODE 		= 1; % 0 to evaluate policy implied by Q_test1, 
+% 1 to evaluate policy implied by trained weights
+
+%
+%% Student code: END
+
 
 %% ACTION CONSTANTS:
 UP_LEFT = 1 ;
@@ -44,7 +56,7 @@ roadBasisGridMaps = generateMiniMaps ; % Generates the 8 road basis grid
 noCarOnRowProbability = 0.8 ; % the probability that there is no car 
 % spawned for each row
 
-% seed = 1234;
+seed = 1234;
 rng(seed); % setting the seed for the random nunber generator
 
 % Call this whenever starting a new episode:
@@ -65,23 +77,20 @@ Q_test1(:,:,3) = 100; % obviously this is not a correctly computed Q-function;
 % default to the first indexed action: go left)
 
 
-%% TEST ACTION TAKING, MOVING WINDOW AND TRAJECTORY PRINTING:
-% Simulating agent behaviour when following the policy defined by 
-% $pi_test1$.
+%% Student code: BEGIN | Hyperparameters 
 %
-% Commented lines also have examples of use for $GridMap$'s $getReward$ and
-% $getTransitions$ functions, which act as our reward and transition
-% functions respectively.
 
-
-%% Student code: BEGIN
-EPSILON 		= 1;
-ALPHA 			= 0.001;
-NUM_EPISODES 	= 2600;
-theta 			= ones(20,3); % Weight vector, size: (num_features, num_actions)
-episodeFeatures = zeros(24, 20);
-episodeRewards 	= zeros(24,1);
-episodeActions 	= zeros(24,1);
+if EVAL
+	avgReturn = 0; % average return over NUM_EPISODES 
+else
+	EPSILON 		= 1;
+	ALPHA 			= 0.005;
+	theta 			= ones(20,3); % Weight vector, size: (num_features, num_actions)
+	episodeFeatures = zeros(24, 20);
+	episodeRewards 	= zeros(24,1);
+	episodeActions 	= zeros(24,1);
+end
+%
 %% Student code: END
 
 for episode = 1:NUM_EPISODES
@@ -107,27 +116,37 @@ for episode = 1:NUM_EPISODES
 		% feature description of a state:
 		stateFeatures = MDP.getStateFeatures(realAgentLocation); % Dimensions, 4 rows x 5 columns
 		
-		for action = 1:3
-			action_values(action) = sum(theta(:, action) .* stateFeatures(:));
-		end % for each possible action
-
 		%% Student code: BEGIN | Implement Epsilon-Greedy Exploration
-		set_a_max = find(action_values == max(action_values)); % Set of optimal actions, if more than one
-		set_a_other = setdiff([1 2 3], set_a_max); % Set of all other actions
 
-		if rand < EPSILON / 3 + 1 - EPSILON | length(set_a_other) == 0 % Exploration or exploitation?
-			idx = randsample(length(set_a_max), 1); % Randomly pick one of the max actions 
-			actionTaken = set_a_max(idx);
-		else	
-			actionTaken = randsample(length(set_a_other), 1); % Randomly pick one of the other actions 
-			actionTaken = set_a_other(idx);
+		if EVAL % Are we in evaluation mode? If yes, go greedy. Else, explore a bit.
+			
+			if EVAL_MODE == 0 % Use policy implied by Q_test1
+				for action = 1:3
+            		action_values(action) = sum (sum( Q_test1(:,:,action) .* stateFeatures ));
+       			end % for each possible action
+				[~, actionTaken] = max(action_values);
+
+			else % Use policy implied by trained weights
+				for action = 1:3
+					action_values(action) = sum(theta(:, action) .* stateFeatures(:));
+				end % for each possible action
+			end
+			
+		else
+			for action = 1:3
+				action_values(action) = sum(theta(:, action) .* stateFeatures(:));
+			end % for each possible action
+			set_a_max = find(action_values == max(action_values)); % Set of optimal actions, if more than one
+			set_a_other = setdiff([1 2 3], set_a_max); % Set of all other actions
+			if rand < EPSILON / 3 + 1 - EPSILON | length(set_a_other) == 0 % Exploration or exploitation?
+				idx = randsample(length(set_a_max), 1); % Randomly pick one of the max actions 
+				actionTaken = set_a_max(idx);
+			else	
+				actionTaken = randsample(length(set_a_other), 1); % Randomly pick one of the other actions 
+				actionTaken = set_a_other(idx);
+			end
 		end
 		%% Student code: END
-
-		% for action = 1:3
-		% 	action_values(action) = sum(sum(Q_test1(:,:,action) .* stateFeatures));
-		% end % for each possible action
-		% [~, actionTaken] = max(action_values);
 			   		
 		[ agentRewardSignal, realAgentLocation, currentTimeStep, ...
 			agentMovementHistory ] = ...
@@ -151,24 +170,29 @@ for episode = 1:NUM_EPISODES
 	% episodeRewards (24,1)
 	% episodeActions (24,1)
 
-	for i = 1:episodeLength - 1
-		a = episodeActions(i); 	% Action taken @i
-		phi = episodeFeatures(i,:); % Feature representation @i
-		Q = phi * theta(:, a); 		% Estimated Action-Value @i
-		if ALGORITHM == 0 % Monte Carlo
-			G = sum(episodeRewards(i:end)); 	% Actual reward accumulated till end of episode
-			grad = (ALPHA * (G - Q)) .* phi'; 	% Gradient
-		elseif ALGORITHM == 1 % TD(0)-Learning
-			R_next = episodeRewards(i + 1); 	% Actual reward @i+1
-			Q_next = episodeFeatures(i + 1,:) * theta(:, episodeActions(i + 1)); % Estimated Q @i+1
-			grad = ALPHA * (R_next + Q_next - Q) .* phi'; % Gradient
-		end % if
-		theta(:,a) = theta(:,a) + grad;
-	end % episodeLength
+	if EVAL
+		% printAgentTrajectory;
+		avgReturn = [avgReturn, Return];
+	else
+		for i = 1:episodeLength - 1
+			a = episodeActions(i); 	% Action taken @i
+			phi = episodeFeatures(i,:); % Feature representation @i
+			Q = phi * theta(:, a); 		% Estimated Action-Value @i
+			if ALGORITHM == 0 % Monte Carlo
+				G = sum(episodeRewards(i:end)); 	% Actual reward accumulated till end of episode
+				grad = (ALPHA * (G - Q)) .* phi'; 	% Gradient
+			elseif ALGORITHM == 1 % TD(0)-Learning
+				R_next = episodeRewards(i + 1); 	% Actual reward @i+1
+				Q_next = episodeFeatures(i + 1,:) * theta(:, episodeActions(i + 1)); % Estimated Q @i+1
+				grad = ALPHA * (R_next + Q_next - Q) .* phi'; % Gradient
+			end % if
+			theta(:,a) = theta(:,a) + grad;
+		end % episodeLength
 
-	ALPHA = 0.8 * ALPHA; % decreasing alpha
+		ALPHA = 0.8 * ALPHA; % decreasing alpha
 
-	EPSILON = 1/episode;
+		EPSILON = 1/episode;
+	end
 	%% Student code: END
 	
 	currentMap = MDP;
@@ -177,9 +201,10 @@ for episode = 1:NUM_EPISODES
 	
 end % NUM_EPISODES
 
-printAgentTrajectory;
 
-Return
-theta
-
-
+if EVAL
+	mean(avgReturn)
+else
+	% printAgentTrajectory;
+	% theta
+end
