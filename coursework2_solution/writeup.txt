@@ -1,0 +1,62 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Course: 		Reinforcement Learning, 
+%				The University of Edinburgh
+% Assignment: 	Coursework 2
+% Professor:	Pavlos Andreadis
+% Student: 		Vesko Cholakov, s1753272
+% Date: 		April 2018
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% STUDENT ANSWERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%%%%%%%%%%%%
+% QUESTION 2
+%%%%%%%%%%%%
+%
+
+For Question 2, I implemented an evaluation mechanism (EVAL = true) for 
+calculating empirically the expected return over many iterations. This 
+allows us to check if the new learned Q values are better than original 
+Q_test1 values.
+
+Indeed, after training on,
+
+NUM_EPISODES 	= 2000
+ALPHA 			= 0.005
+DECR_FACTOR 	= 0.9
+
+I obtained the following results:
+
+Return with policy implied by Q_test1:
+	--> Return -21.6372
+
+Return with policy implied by improved Q values, using:
+	Original Features (DECR_FACTOR 	= 0.9)
+		--> Return -12.1124
+
+	Custom Features (DECR_FACTOR = 1)
+		--> Return 14.4543
+
+
+For custom features, I picked the immediate 3 squares in front of the car: 
+in front to the left, in front to the right and directly in front. This is
+a better 'feature representation.' On one hand, the vehicle does not need 
+to look 4 steps ahead to make an optimal decision. Second, the original 
+features do not give enough information – the agent sees the same 4x5 grid 
+regardless on which of the 5 possible horizontal positions the agent is 
+located. In summary, making the two small improvements – getting rid of 
+unnecessary information and adding useful information – improve significantly 
+the expected return.
+
+
+Additionally, I noticed that setting G = episodeRewards(i), rather than 
+G = sum(episodeRewards(i:end)) yields higher return. This is analogous to 
+setting the discount value of Gamma infinitely low to discourage looking into 
+the future. The engineering decision is effective with the current setup of
+the problem, because the agent receives reward signals after each action.
+However, the same technique would not work well in more complicated games – 
+such as learning to play chess or GO, in which the agent is typically rewarded
+only at the end.

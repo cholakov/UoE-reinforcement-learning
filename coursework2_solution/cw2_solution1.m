@@ -1,4 +1,4 @@
-ALGORITHM = 1; % 0 for Monte Carlo, 1 for TD-Learning
+ALGORITHM = 0; % 0 for Monte Carlo, 1 for TD-Learning
 
 %% ACTION CONSTANTS:
 UP_LEFT = 1 ;
